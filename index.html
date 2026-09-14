@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>index_5-7</title>
+    
+    <!-- SDKs de Firebase y EmailJS -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            background-color: #e8f8f5; 
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 500px; 
+            text-align: center; 
+        }
+        h1 { 
+            font-size: 1.8rem; 
+            color: #27ae60; 
+            margin-bottom: 5px; 
+            text-transform: uppercase; 
+        }
+        .subtitulo {
+            font-size: 1rem;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        .selector-libros {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .btn-libro {
+            padding: 6px 12px;
+            cursor: pointer;
+            border: 2px solid #2ecc71;
+            border-radius: 6px;
+            background: white;
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-libro.activo {
+            background: #27ae60;
+            color: white;
+        }
+        .grilla-listas {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 5px;
+        }
+        .btn-lista {
+            padding: 10px 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background: #d4efdf;
+            color: #145a32;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .btn-lista:hover {
+            background: #52be80;
+            color: white;
+        }
+        .frase { 
+            font-size: 1.2rem; 
+            margin: 20px 0; 
+            min-height: 60px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        button.accion { 
+            margin: 6px; 
+            padding: 10px 15px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 8px; 
+            background: #2ecc71; 
+            color: white; 
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        button.accion:hover { 
+            background: #27ae60; 
+        }
+        .btn-discreto {
+            background: #95a5a6 !important;
+        }
+        .btn-discreto:hover {
+            background: #7f8c8d !important;
+        }
+        .btn-visualizar {
+            background: #ffd700 !important;
+            color: #5a4a00 !important;
+        }
+        .btn-visualizar:hover {
+            background: #ffea00 !important;
+            color: #3d3200 !important;
+        }
+        .btn-espanol {
+            background: #ffd700 !important;
+            color: #5a4a00 !important;
+        }
+        .btn-espanol:hover {
+            background: #ffea00 !important;
+            color: #3d3200 !important;
+        }
+        #marcador { 
+            font-weight: bold; 
+            color: #555;
+            margin-bottom: 10px; 
+        }
+        .oculto {
+            display: none;
+        }
+        .info-secuencial {
+            background: #f4f6f7;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.95rem;
+        }
+        .contenedor-visualizacion {
+            max-height: 220px;
+            overflow-y: auto;
+            text-align: left;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .btn-navegacion-rosa {
+            background: #ff1493 !important;
+            color: white !important;
+        }
+        .btn-navegacion-rosa:hover {
+            background: #ff3aa7 !important;
+        }
+        .input-email {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="titulo-panel">Libros 5-7</h1>
+    <div class="subtitulo" id="sub-panel">Acceso de Usuarios</div>
+
+    <!-- VISTA DE LOGIN (Pide el correo para enviar el Magic Link) -->
+    <div id="vista-login">
+        <p>Introduce tu correo electrónico para recibir el enlace de acceso:</p>
+        <input type="email" id="email-usuario" class="input-email" placeholder="tu@correo.com">
+        <br>
+        <button class="accion" onclick="enviarEnlaceLogin()">Enviar enlace de acceso</button>
+      
+        <p id="mensaje-login" style="font-size: 0.9rem; color: #27ae60; margin-top: 10px;"></p>
+    </div>
+    
+    <!-- VISTA DEL MENÚ PRINCIPAL (Oculta hasta que se autentica) -->
+    <div id="vista-menu" class="oculto">
+        <div class="subtitulo">Selecciona un libro y una lista</div>
+        <div class="selector-libros">
+            <button class="btn-libro activo" onclick="seleccionarLibro(5)">Libro 5</button>
+            <button class="btn-libro" onclick="seleccionarLibro(6)">Libro 6</button>
+            <button class="btn-libro" onclick="seleccionarLibro(7)">Libro 7</button>
+        </div>
+        <div id="contenedor-listas" class="grilla-listas">
+            <!-- Se generan los botones de lista dinámicamente -->
+        </div>
+    </div>
+
+    <!-- VISTA DEL ESTUDIO DE FRASES -->
+    <div id="vista-estudio" class="oculto">
+        <div id="marcador">Frase 1 de 50</div>
+        <div class="frase" id="ingles" style="font-weight: bold; color: #222; display: none;"></div>
+        <div class="frase" id="espanol" style="color: #555; display: none;"></div>
+        
+        <div>
+            <button class="accion" onclick="leerIngles()">Escuchar EN</button>
+            <button class="accion" onclick="mostrarIngles()">Leer EN</button>
+        </div>
+        <div>
+            <button class="accion btn-espanol" onclick="leerEspanol()">Escuchar ES</button>
+            <button class="accion btn-espanol" onclick="mostrarEspanol()">Leer ES</button>
+        </div>
+        <div style="margin-top: 15px;">
+            <button class="accion btn-navegacion-rosa" onclick="anteriorFrase()">⬅️ Anterior</button>
+            <button class="accion btn-navegacion-rosa" onclick="siguienteFrase()">Siguiente ➡️</button>
+        </div>
+        <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 5px;">
+            <button class="accion" style="background: #3498db;" onclick="abrirVistaSecuencial()">🎧 Escuchar las frases seguidas</button>
+            <button class="accion" style="background: #7f8c8d;" onclick="volverAlMenu()">🏠 Volver a las listas</button>
+        </div>
+    </div>
+
+    <!-- VISTA SECUENCIAL / REPRODUCCIÓN CONTINUA -->
+    <div id="vista-secuencial" class="oculto">
+        <div class="info-secuencial" id="info-secuencial">Información de libro y lista</div>
+
+        <div style="margin-bottom: 12px; text-align: center;">
+            <label for="velocidad-lectura" style="display: block; margin-bottom: 6px;">Selecciona velocidad de lectura</label>
+            <select id="velocidad-lectura" style="padding: 8px 12px; font-size: 16px; border-radius: 8px;">
+                <option value="1">1.0 x</option>
+                <option value="0.6">0.6 x</option>
+                <option value="0.2">0.2 x</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 12px; text-align: center;">
+            <label for="select-voz-en" style="display: block; margin-bottom: 6px;">Voz para inglés:</label>
+            <select id="select-voz-en" style="padding: 8px 12px; font-size: 16px; border-radius: 8px;">
+                <option value="es_ES">🇪🇸 Español España</option>
+                <option value="es_US">🇺🇸 Español Estados Unidos</option>
+                <option value="en_GB">🇬🇧 Inglés Reino Unido</option>
+                <option value="en_US" selected>🇺🇸 Inglés Estados Unidos</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 12px; text-align: center;">
+            <label for="select-voz-es" style="display: block; margin-bottom: 6px;">Voz para español:</label>
+            <select id="select-voz-es" style="padding: 8px 12px; font-size: 16px; border-radius: 8px;">
+                <option value="es_ES" selected>🇪🇸 Español España</option>
+                <option value="es_US">🇺🇸 Español Estados Unidos</option>
+                <option value="en_GB">🇬🇧 Inglés Reino Unido</option>
+                <option value="en_US">🇺🇸 Inglés Estados Unidos</option>
+            </select>
+        </div>
+        
+        <div id="contenedor-visualizacion" class="contenedor-visualizacion oculto"></div>
+
+        <div>
+            <button class="accion" onclick="reproducirSecuencia('EN')">🔊 Escuchar todas EN</button>
+            <button class="accion" onclick="reproducirSecuencia('ES')">🔊 Escuchar todas ES</button>
+        </div>
+        <div>
+            <button class="accion" onclick="reproducirSecuencia('EN-ES')">🔊 Escuchar todas EN - ES</button>
+            <button class="accion" onclick="reproducirSecuencia('ES-EN')">🔊 Escuchar todas ES - EN</button>
+        </div>
+        <div>
+            <button class="accion" style="background: #e74c3c;" onclick="pausarAudio()">⏸️ Pausar audio</button>
+            <button class="accion" style="background: #e74c3c;" onclick="reanudarAudio()">▶️ Reanudar</button>
+        </div>
+        <div>
+            <button class="accion btn-visualizar" onclick="visualizarTexto('EN')">Visualizar EN</button>
+            <button class="accion btn-visualizar" onclick="visualizarTexto('ES')">Visualizar ES</button>
+        </div>
+        <div>
+            <button class="accion btn-visualizar" onclick="visualizarTexto('EN-ES')">Visualizar EN - ES</button>
+            <button class="accion btn-visualizar" onclick="visualizarTexto('ES-EN')">Visualizar ES - EN</button>
+        </div>
+        <div>
+            <button class="accion btn-discreto" onclick="ocultarTextoSecuencial()">🙈 Ocultar texto</button>
+        </div>
+        <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;">
+            <button class="accion" style="background: #3498db;" onclick="volverAEstudio()">⬅️ Volver a la pantalla anterior</button>
+            <button class="accion" style="background: #7f8c8d;" onclick="volverAlMenu()">🏠 Cambiar lista</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuración de Firebase para el proyecto Libros 5-7
+    const firebaseConfig = {
+        apiKey: "AIzaSyDyF4d1GovpQWrTXI7vi9t_84mWjvu9NVM",
+        authDomain: "libros-5-7.firebaseapp.com",
+        projectId: "libros-5-7",
+        storageBucket: "libros-5-7.firebasestorage.app",
+        messagingSenderId: "122678286581",
+        appId: "1:122678286581:web:73927d0b0883f50b3fcdbc",
+        measurementId: "G-88T889M03D"
+    };
+    
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Configuración de EmailJS (mismos datos y servicio original)
+    (function(){
+        emailjs.init("YOUR_USER_ID"); 
+    })();
+
+    // BASE DE DATOS DE LAS LISTAS (Libros 5, 6 y 7)
+    const baseDatosListas = {
+        // --- LIBRO 5 (Lista 501 de muestra) ---
+        501: [
+            {es: "Ejemplo de frase del libro 5, lista 501.", en: "Example phrase from book 5, list 501."},
+            {es: "Esta es la segunda frase de muestra.", en: "This is the second sample phrase."}
+        ],
+        // --- LIBRO 6 (Lista 601 de muestra) ---
+        601: [
+            {es: "Ejemplo de frase del libro 6, lista 601.", en: "Example phrase from book 6, list 601."},
+            {es: "Esta es la segunda frase de muestra.", en: "This is the second sample phrase."}
+        ],
+        // --- LIBRO 7 (Lista 701 de muestra) ---
+        701: [
+            {es: "Ejemplo de frase del libro 7, lista 701.", en: "Example phrase from book 7, list 701."},
+            {es: "Esta es la segunda frase de muestra.", en: "This is the second sample phrase."}
+        ]
+    };
+
+    let libroActual = 5;
+    let listaActual = 501;
+    let indiceFraseActual = 0;
+    let frasesActuales = [];
+    let utteranceActual = null;
+
+    function enviarEnlaceLogin() {
+        const email = document.getElementById('email-usuario').value;
+        const mensaje = document.getElementById('mensaje-login');
+        if (!email) {
+            mensaje.style.color = '#e74c3c';
+            mensaje.textContent = 'Por favor, introduce un correo válido.';
+            return;
+        }
+
+        const actionCodeSettings = {
+            url: window.location.href,
+            handleCodeInApp: true,
+        };
+
+        auth.sendSignInLinkToEmail(email, actionCodeSettings)
+            .then(() => {
+                window.localStorage.setItem('emailForSignIn', email);
+                mensaje.style.color = '#27ae60';
+                mensaje.textContent = '¡Enlace enviado! Revisa tu correo electrónico.';
+            })
+            .catch((error) => {
+                mensaje.style.color = '#e74c3c';
+                mensaje.textContent = 'Error al enviar el enlace: ' + error.message;
+            });
+    }
+
+    // Comprobar enlace de acceso al cargar
+    window.onload = function() {
+        if (auth.isSignInWithEmailLink(window.location.href)) {
+            let email = window.localStorage.getItem('emailForSignIn');
+            if (!email) {
+                email = window.prompt('Por favor, confirma tu correo electrónico para el acceso:');
+            }
+            auth.signInWithEmailLink(email, window.location.href)
+                .then((result) => {
+                    window.localStorage.removeItem('emailForSignIn');
+                    mostrarMenuPrincipal();
+                })
+                .catch((error) => {
+                    alert('Error de autenticación: ' + error.message);
+                });
+        } else {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    mostrarMenuPrincipal();
+                } else {
+                    document.getElementById('vista-login').classList.remove('oculto');
+                }
+            });
+        }
+    };
+
+    function mostrarMenuPrincipal() {
+        document.getElementById('vista-login').classList.add('oculto');
+        document.getElementById('vista-menu').classList.remove('oculto');
+        seleccionarLibro(5);
+    }
+
+    function seleccionarLibro(numeroLibro) {
+        libroActual = numeroLibro;
+        document.querySelectorAll('.btn-libro').forEach(btn => btn.classList.remove('activo'));
+        event && event.target.classList.add('activo');
+
+        const contenedorListas = document.getElementById('contenedor-listas');
+        contenedorListas.innerHTML = '';
+
+        let inicio = 0, fin = 0;
+        if (numeroLibro === 5) { inicio = 501; fin = 530; }
+        else if (numeroLibro === 6) { inicio = 601; fin = 630; }
+        else if (numeroLibro === 7) { inicio = 701; fin = 740; }
+
+        for (let i = inicio; i <= fin; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'btn-lista';
+            btn.textContent = 'Lista ' + i;
+            btn.onclick = () => cargarLista(i);
+            contenedorListas.appendChild(btn);
+        }
+    }
+
+    function cargarLista(numeroLista) {
+        listaActual = numeroLista;
+        frasesActuales = baseDatosListas[numeroLista] || [
+            {es: "Frase de ejemplo predeterminada.", en: "Default sample phrase."}
+        ];
+        indiceFraseActual = 0;
+
+        document.getElementById('vista-menu').classList.add('oculto');
+        document.getElementById('vista-estudio').classList.remove('oculto');
+        actualizarVistaFrase();
+    }
+
+    function actualizarVistaFrase() {
+        document.getElementById('marcador').textContent = `Frase ${indiceFraseActual + 1} de ${frasesActuales.length} (Lista ${listaActual})`;
+        document.getElementById('ingles').textContent = frasesActuales[indiceFraseActual].en;
+        document.getElementById('espanol').textContent = frasesActuales[indiceFraseActual].es;
+        document.getElementById('ingles').style.display = 'none';
+        document.getElementById('espanol').style.display = 'none';
+    }
+
+    function mostrarIngles() {
+        const el = document.getElementById('ingles');
+        el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function mostrarEspanol() {
+        const el = document.getElementById('espanol');
+        el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function leerIngles() {
+        hablarTexto(frasesActuales[indiceFraseActual].en, document.getElementById('select-voz-en').value);
+    }
+
+    function leerEspanol() {
+        hablarTexto(frasesActuales[indiceFraseActual].es, document.getElementById('select-voz-es').value);
+    }
+
+    function hablarTexto(texto, lang) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            utteranceActual = new SpeechSynthesisUtterance(texto);
+            utteranceActual.lang = lang;
+            utteranceActual.rate = parseFloat(document.getElementById('velocidad-lectura').value);
+            window.speechSynthesis.speak(utteranceActual);
+        }
+    }
+
+    function siguienteFrase() {
+        if (indiceFraseActual < frasesActuales.length - 1) {
+            indiceFraseActual++;
+            actualizarVistaFrase();
+        }
+    }
+
+    function anteriorFrase() {
+        if (indiceFraseActual > 0) {
+            indiceFraseActual--;
+            actualizarVistaFrase();
+        }
+    }
+
+    function volverAlMenu() {
+        window.speechSynthesis && window.speechSynthesis.cancel();
+        document.getElementById('vista-estudio').classList.add('oculto');
+        document.getElementById('vista-secuencial').classList.add('oculto');
+        document.getElementById('vista-menu').classList.remove('oculto');
+    }
+
+    function abrirVistaSecuencial() {
+        document.getElementById('vista-estudio').classList.add('oculto');
+        document.getElementById('vista-secuencial').classList.remove('oculto');
+        document.getElementById('info-secuencial').textContent = `Libro ${libroActual} - Lista ${listaActual}`;
+    }
+
+    function volverAEstudio() {
+        window.speechSynthesis && window.speechSynthesis.cancel();
+        document.getElementById('vista-secuencial').classList.add('oculto');
+        document.getElementById('vista-estudio').classList.remove('oculto');
+    }
+
+    function pausarAudio() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.pause();
+        }
+    }
+
+    function reanudarAudio() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.resume();
+        }
+    }
+
+    function reproducirSecuencia(modo) {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+
+        let i = 0;
+        const velocidad = parseFloat(document.getElementById('velocidad-lectura').value);
+        const vozEn = document.getElementById('select-voz-en').value;
+        const vozEs = document.getElementById('select-voz-es').value;
+
+        function reproducirSiguiente() {
+            if (i >= frasesActuales.length) return;
+            const frase = frasesActuales[i];
+
+            if (modo === 'EN') {
+                let utter = new SpeechSynthesisUtterance(frase.en);
+                utter.lang = vozEn;
+                utter.rate = velocidad;
+                utter.onend = () => { i++; reproducirSiguiente(); };
+                window.speechSynthesis.speak(utter);
+            } else if (modo === 'ES') {
+                let utter = new SpeechSynthesisUtterance(frase.es);
+                utter.lang = vozEs;
+                utter.rate = velocidad;
+                utter.onend = () => { i++; reproducirSiguiente(); };
+                window.speechSynthesis.speak(utter);
+            } else if (modo === 'EN-ES') {
+                let utterEn = new SpeechSynthesisUtterance(frase.en);
+                utterEn.lang = vozEn;
+                utterEn.rate = velocidad;
+                utterEn.onend = () => {
+                    let utterEs = new SpeechSynthesisUtterance(frase.es);
+                    utterEs.lang = vozEs;
+                    utterEs.rate = velocidad;
+                    utterEs.onend = () => { i++; reproducirSiguiente(); };
+                    window.speechSynthesis.speak(utterEs);
+                };
+                window.speechSynthesis.speak(utterEn);
+            } else if (modo === 'ES-EN') {
+                let utterEs = new SpeechSynthesisUtterance(frase.es);
+                utterEs.lang = vozEs;
+                utterEs.rate = velocidad;
+                utterEs.onend = () => {
+                    let utterEn = new SpeechSynthesisUtterance(frase.en);
+                    utterEn.lang = vozEn;
+                    utterEn.rate = velocidad;
+                    utterEn.onend = () => { i++; reproducirSiguiente(); };
+                    window.speechSynthesis.speak(utterEn);
+                };
+                window.speechSynthesis.speak(utterEs);
+            }
+        }
+        reproducirSiguiente();
+    }
+
+    function visualizarTexto(modo) {
+        const contenedor = document.getElementById('contenedor-visualizacion');
+        contenedor.classList.remove('oculto');
+        let html = '';
+        frasesActuales.forEach((f, idx) => {
+            if (modo === 'EN') html += `<p><b>${idx + 1}.</b> ${f.en}</p>`;
+            else if (modo === 'ES') html += `<p><b>${idx + 1}.</b> ${f.es}</p>`;
+            else if (modo === 'EN-ES') html += `<p><b>${idx + 1}.</b> ${f.en} / <em>${f.es}</em></p>`;
+            else if (modo === 'ES-EN') html += `<p><b>${idx + 1}.</b> ${f.es} / <em>${f.en}</em></p>`;
+        });
+        contenedor.innerHTML = html;
+    }
+
+    function ocultarTextoSecuencial() {
+        const contenedor = document.getElementById('contenedor-visualizacion');
+        contenedor.classList.add('oculto');
+        contenedor.innerHTML = '';
+    }
+</script>
+
+</body>
+</html>
